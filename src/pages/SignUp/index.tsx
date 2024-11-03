@@ -5,27 +5,56 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import {Gap, TextInput} from '../../components';
-import {getAuth, signInWithEmailAndPassword} from 'firebase/auth';
+import {getAuth, createUserWithEmailAndPassword} from 'firebase/auth';
 import {showMessage} from 'react-native-flash-message';
 import {Uclinic} from '../../assets/icon';
-const SignIn = ({navigation}) => {
+import {getDatabase, ref, set} from 'firebase/database';
+import { serverTimestamp } from 'firebase/database';
+
+const SignUp = ({navigation}) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassowrd] = useState('');
-
-  const onSubmit = () => {
+  const [fullName, setFullName] = useState('');
+  const [age, setAge] = useState('');
+  const [address, setAddress] = useState('');
+  const [desc, setDesc] = useState('');
+  const [gender, setGender] = useState('');
+  const onSubmit = () =>{ 
+    const data = {
+      name: name,
+      email: email,
+    };
+    const record =  {
+      fullName: fullName,
+      address: address,
+      age: age,
+      gender: gender,
+      description: desc,
+      createdAt: serverTimestamp(),
+    };
+  
     const auth = getAuth();
-    signInWithEmailAndPassword(auth, email, password)
+    const db = getDatabase();
+    createUserWithEmailAndPassword(auth, email, password)
       .then(userCredential => {
-        // Signed in
+        // Signed up
         const user = userCredential.user;
-        navigation.navigate('Home', {uid: user.uid});
+        set(ref(db, 'users/' + user.uid), data);
+        set(ref(db, 'users/' + user.uid + '/record'), record)
+        showMessage({
+          message: 'Registrasi berhasil, silahkan login',
+          type: 'success',
+        });
+        navigation.navigate('SignIn');
       })
       .catch(error => {
+        const errorMessage = error.message;
         showMessage({
-          message: 'Wrong email or password',
-          description: error.message,
+          message: errorMessage,
           type: 'danger',
         });
       });
@@ -47,29 +76,30 @@ const SignIn = ({navigation}) => {
         />
         <Gap height={26} />
         <TextInput
+          label="Username"
+          placeholder="Enter your username"
+          value={name}
+          onChangeText = {value => setName(value)}
+        />
+        <Gap height={26} />
+        <TextInput
           label="Password"
           placeholder="Enter your password"
           value={password}
           onChangeText={value => setPassowrd(value)}
           secureTextEntry={true}
         />
+
         <Gap height={30} />
         <TouchableOpacity style={styles.signInButton} onPress={onSubmit}>
-          <Text style={styles.signInButtonText}>Sign In</Text>
+          <Text style={styles.signInButtonText}>Sign Up</Text>
         </TouchableOpacity>
-        <Gap height={10} />
-        <View style={styles.signupWrapper}>
-          <Text style={styles.text}>Belum punya akun? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.clickableText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </ScrollView>
   );
 };
 
-export default SignIn;
+export default SignUp;
 
 const styles = StyleSheet.create({
   container: {
@@ -94,12 +124,13 @@ const styles = StyleSheet.create({
     width: 130,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 110,
+    marginLeft: 120,
   },
   signInButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Reguler',
   },
   orText: {
     fontSize: 16,
@@ -122,5 +153,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#92BEFD',
+  },
+  text: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: 'black',
   },
 });
