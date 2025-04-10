@@ -11,6 +11,7 @@
     "emu": "emulator -avd Pixel_3_XL_API_35"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.3.0",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
     "@react-navigation/stack": "^6.4.1",

@@ -15,16 +15,31 @@ import {getDatabase, ref, get} from 'firebase/database';
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassowrd] = useState('');
+  const [nim, setNim] = useState('');
+  
+  
 
   const onSubmit = () => {
+    if (!nim) {
+      showMessage({
+        message: 'NIM tidak boleh kosong',
+        type: 'danger',
+      });
+      return;
+    }
+  
+    // Generate pseudo email using NIM
+    const pseudoEmail = `${nim}@unklab.com`;
+    
+  
     const auth = getAuth();
     const db = getDatabase();
-
-    signInWithEmailAndPassword(auth, email, password)
+  
+    signInWithEmailAndPassword(auth, pseudoEmail, password) // Use pseudo email
       .then(userCredential => {
         // Signed in
         const user = userCredential.user;
-
+  
         // Check if user exists in 'users/mahasiswa'
         const userRef = ref(db, 'users/mahasiswa/' + user.uid);
         get(userRef)
@@ -51,7 +66,7 @@ const SignIn = ({navigation}) => {
       })
       .catch(error => {
         showMessage({
-          message: 'Wrong email or password',
+          message: 'Wrong NIM or password',
           description: error.message,
           type: 'danger',
         });
@@ -67,10 +82,10 @@ const SignIn = ({navigation}) => {
         </View>
         <Gap height={26} />
         <TextInput
-          label="Email"
-          placeholder="Enter your email"
-          value={email}
-          onChangeText={value => setEmail(value)}
+          label="Nim"
+          placeholder="Enter you Nim"
+          value={nim}
+          onChangeText={value => setNim(value)}
         />
         <Gap height={26} />
         <TextInput

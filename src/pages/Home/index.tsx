@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,38 +8,44 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import {Gap} from '../../components';
-import { getDatabase, ref, onValue } from "firebase/database";
+import { Gap } from '../../components';
+import { getDatabase, ref, onValue } from 'firebase/database';
 
-const Home = ({navigation, route}) => {
-  const {uid} = route.params;
+const Home = ({ navigation, route }) => {
+  const { uid } = route.params;
   const db = getDatabase();
-  const[name, setUser] = useState()
-  useEffect(()=>{
-    const userRef = ref(db, 'users/' + uid);
-    onValue(userRef,snapshot=>{
+  const [name, setUser] = useState('');
+
+  useEffect(() => {
+    const userRef = ref(db, 'users/mahasiswa/' + uid);
+    onValue(userRef, snapshot => {
       const data = snapshot.val();
-      setUser(data.name);
+      if (data && data.name) {
+        setUser(data.name);
+      }
     });
-  });
-  
-  
+  }, []);
 
   return (
     <ScrollView>
       <View style={styles.container}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.textImage1}>Selamat datang,</Text>
+        <View style={styles.headerContainer}>
+          <View style={styles.textContainer}>
+            <Text style={styles.textImage1}>Selamat datang,</Text>
+            <Gap height={10} />
+            <Text style={styles.textImage2}>{name}</Text>
+          </View>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <Image
               source={require('../../assets/images/UserPhoto.png')}
               style={styles.Np}
             />
           </TouchableOpacity>
-          <Text style={styles.textImage2}>{name}</Text>
         </View>
       </View>
+
       <Gap height={26} />
+
       <View style={styles.bgContainer}>
         <ImageBackground
           source={require('../../assets/images/medis.png')}
@@ -76,11 +82,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 15,
+    paddingTop: 30,
+  },
+  textContainer: {
+    flex: 1,
+  },
   Np: {
     width: 40,
     height: 40,
-    marginLeft: 340,
-    marginTop: -20,
   },
   imJ: {
     width: 110,
@@ -121,19 +135,11 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 32,
     fontFamily: 'Poppins-Regular',
-    textAlign: 'left',
-    left: 15,
-    top: 20,
-    marginTop: 20,
   },
   textImage2: {
     color: 'black',
     fontSize: 32,
     fontFamily: 'Poppins-Bold',
-    textAlign: 'left',
-    left: 15,
-    top: 20,
-    marginTop: -40,
   },
   text: {
     color: 'white',

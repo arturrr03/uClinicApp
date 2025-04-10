@@ -21,7 +21,7 @@ const Profile = ({ navigation }) => {
 
   useEffect(() => {
     if (uid) { // Ensure uid is available
-      const userRef = ref(db, 'users/' + uid);
+      const userRef = ref(db, 'users/mahasiswa/' + uid);
       onValue(userRef, snapshot => {
         const data = snapshot.val();
         setUser(data?.name); // Optional chaining in case data is null
@@ -52,9 +52,7 @@ const Profile = ({ navigation }) => {
           <Text style={styles.label}>Nama</Text>
           <View style={styles.row}>
             <Text style={styles.infoText}>{name}</Text>
-            <TouchableOpacity>
-              <Text style={styles.editText}>Ubah</Text>
-            </TouchableOpacity>
+           
           </View>
 
           <Gap height={10} />
@@ -119,10 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  editText: {
-    color: '#4C8BF5',
-    fontSize: 14,
-  },
+
   logoutButton: {
     marginTop: 400,
     backgroundColor: '#E5E5E5',

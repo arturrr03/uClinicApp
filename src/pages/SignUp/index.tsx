@@ -1,3 +1,4 @@
+
 import React, {useState} from 'react';
 import {
   ScrollView,
@@ -25,9 +26,20 @@ const SignUp = ({navigation}) => {
   const [desc, setDesc] = useState('');
   const [gender, setGender] = useState('');
   const onSubmit = () => {
+    if (!nim) {
+      showMessage({
+        message: 'NIM tidak boleh kosong',
+        type: 'danger',
+      });
+      return;
+    }
+  
+    // Generate pseudo email using NIM
+    const pseudoEmail = `${nim}@unklab.com`;
+  
     const data = {
       name: name,
-      email: email,
+      email: pseudoEmail, // Use pseudo email
       fullName: fullName,
       address: address,
       age: age,
@@ -35,10 +47,10 @@ const SignUp = ({navigation}) => {
       description: desc,
       createdAt: serverTimestamp(),
     };
-
+  
     const auth = getAuth();
     const db = getDatabase();
-    createUserWithEmailAndPassword(auth, email, password)
+    createUserWithEmailAndPassword(auth, pseudoEmail, password) // Use pseudo email
       .then(userCredential => {
         // Signed up
         const user = userCredential.user;
@@ -88,13 +100,13 @@ const SignUp = ({navigation}) => {
           onChangeText={value => setPassowrd(value)}
           secureTextEntry={true}
         />
-
+        <Gap height={26} />
         <TextInput
           label="NIM"
           placeholder="Enter your NIM"
           value={nim}
           onChangeText={value => setNim(value)}
-          secureTextEntry={true}
+          secureTextEntry={false}
         />
 
         <Gap height={30} />
@@ -126,7 +138,7 @@ const styles = StyleSheet.create({
   signInButton: {
     backgroundColor: '#92BEFD',
     padding: 15,
-    borderRadius: 25,
+    borderRadius: 20,
     marginTop: 41,
     width: 130,
     alignItems: 'center',

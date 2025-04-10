@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,28 +6,57 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
-import { getDatabase, ref, set, push } from 'firebase/database';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { getDatabase, ref, set, push, onValue, serverTimestamp } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
-import { serverTimestamp } from 'firebase/database';
 import FlashMessage, { showMessage } from 'react-native-flash-message';
 
 const Keluhan = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
-  const [address, setAddress] = useState('');
+  const [date, setDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
   const [gender, setGender] = useState('');
   const [description, setDescription] = useState('');
   const [charCount, setCharCount] = useState(200);
+  const [status, setStatus] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+      const db = getDatabase();
+      const recordRef = ref(db, `users/mahasiswa/${user.uid}/record`);
+      onValue(recordRef, (snapshot) => {
+        const records = snapshot.val();
+        if (records) {
+          const latestRecord = Object.values(records).pop();
+          setStatus(latestRecord.status);
+        }
+      });
+    }
+  }, []);
 
   const handleDescriptionChange = (text) => {
     setDescription(text);
     setCharCount(200 - text.length);
   };
 
+  const handleDateChange = (event, selected) => {
+    setShowDatePicker(false);
+    if (selected) {
+      const formatted = selected.toISOString().split('T')[0];
+      setSelectedDate(selected);
+      setDate(formatted);
+    }
+  };
+
   const onSubmit = () => {
-    // Validation to check if all fields are filled
-    if (!fullName || !age || !address || !gender || !description) {
+    if (!fullName || !age || !date || !gender || !description) {
       showMessage({
         message: 'Data incomplete',
         description: 'Lengkapi form',
@@ -41,23 +70,23 @@ const Keluhan = ({ navigation }) => {
 
     if (user) {
       const db = getDatabase();
-      const recordRef = ref(db, `users/${user.uid}/record`);
+      const recordRef = ref(db, `users/mahasiswa/${user.uid}/record`);
       const recordData = {
         fullName,
         age,
-        address,
+        date,
         gender,
         description,
+        status: 'pending',
         createdAt: serverTimestamp(),
       };
 
-      // Using push to create a unique key for each record entry
       const newRecordRef = push(recordRef);
       set(newRecordRef, recordData)
         .then(() => {
           showMessage({
             message: 'Success',
-            description: 'Data successfully submitted!',
+            description: 'Keluhan berhasil dikirim. Menunggu respon...',
             type: 'success',
           });
           navigation.goBack();
@@ -69,14 +98,17 @@ const Keluhan = ({ navigation }) => {
             type: 'danger',
           });
         });
-    } else {
-      showMessage({
-        message: 'User not logged in',
-        description: 'Please log in to submit a complaint.',
-        type: 'danger',
-      });
     }
   };
+
+  useEffect(() => {
+    if (status === 'berhasil') {
+      showMessage({
+        message: 'Keluhan Anda telah diterima!',
+        type: 'success',
+      });
+    }
+  }, [status]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -90,13 +122,26 @@ const Keluhan = ({ navigation }) => {
         onChangeText={setFullName}
         placeholder="Masukkan nama lengkap"
       />
-      <Text style={styles.label}>Alamat</Text>
-      <TextInput
-        style={styles.input}
-        value={address}
-        onChangeText={setAddress}
-        placeholder="Masukkan alamat"
-      />
+      <Text style={styles.label}>Tanggal</Text>
+      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+        <View pointerEvents="none">
+          <TextInput
+            style={styles.input}
+            value={date}
+            placeholder="Pilih tanggal"
+            editable={false}
+          />
+        </View>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate || new Date()}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
       <View style={styles.row}>
         <TextInput
           style={[styles.input, styles.halfInput]}
@@ -124,6 +169,14 @@ const Keluhan = ({ navigation }) => {
       />
       <Text style={styles.charCount}>{charCount}</Text>
 
+      {status && (
+        <View style={styles.statusContainer}>
+          <Text style={[styles.statusText, { color: status === 'pending' ? 'orange' : 'green' }]}>
+            Status Keluhan: {status === 'pending' ? 'Menunggu' : 'Berhasil'}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
           <Text style={styles.submitText}>Ajukan keluhan</Text>
@@ -134,8 +187,6 @@ const Keluhan = ({ navigation }) => {
           <Text style={styles.cancelText}>Batal</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Flash Message Component */}
       <FlashMessage position="top" />
     </ScrollView>
   );
@@ -146,13 +197,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     backgroundColor: '#F7F8FA',
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  backText: {
-    fontSize: 16,
-    color: 'black',
   },
   title: {
     fontSize: 24,
@@ -165,9 +209,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   label: {
-    fontFamily: 'Poppins-Regular',
-    flexDirection: 'row',
     color: 'black',
+    marginBottom: 5,
   },
   input: {
     backgroundColor: 'white',
@@ -218,6 +261,16 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  statusContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  statusText: {
     fontSize: 16,
     fontWeight: 'bold',
   },

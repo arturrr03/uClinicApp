@@ -25,7 +25,7 @@ const DescRm = ({ navigation }) => {
 
   useEffect(() => {
     if (recordId) { // Ensure uid is available
-      const recordRef = ref(db, `users/${getAuth().currentUser?.uid}/record/${recordId}`);
+      const recordRef = ref(db, `users/mahasiswa/${getAuth().currentUser?.uid}/record/${recordId}`);
       onValue(recordRef, snapshot => {
         const data = snapshot.val();
         if (data) {

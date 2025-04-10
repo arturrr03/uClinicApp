@@ -12,25 +12,32 @@ import { Gap } from '../../components';
 
 const Rekam = ({ navigation }) => {
   const [records, setRecords] = useState([]);
+  const [nama, setNama] = useState('');
   const auth = getAuth();
   const user = auth.currentUser;
 
   useEffect(() => {
     if (user) {
       const db = getDatabase();
-      const recordsRef = ref(db, `users/${user.uid}/record`);
+      const userRef = ref(db, `users/mahasiswa/${user.uid}`);
 
-      // Listen to data changes
-      onValue(recordsRef, (snapshot) => {
+      onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
-          const recordArray = Object.keys(data).map(key => ({
-            id: key,
-            ...data[key]
-          }));
-          setRecords(recordArray);
-        } else {
-          setRecords([]);
+
+          // Ambil nama mahasiswa
+          setNama(data.nama || 'Description Rekam Medis');
+
+          // Ambil data record jika ada
+          if (data.record) {
+            const recordArray = Object.keys(data.record).map((key) => ({
+              id: key,
+              ...data.record[key],
+            }));
+            setRecords(recordArray);
+          } else {
+            setRecords([]);
+          }
         }
       });
     }
@@ -50,7 +57,9 @@ const Rekam = ({ navigation }) => {
             style={styles.rm3}
             onPress={() => navigation.navigate('DescRm', { recordId: record.id })}
           >
-            <Gap height={22} />
+            <Gap height={10} />
+            <Text style={styles.nama}>{nama}</Text>
+            <Gap height={5} />
             <Text style={styles.tgl}>{new Date(record.createdAt).toLocaleDateString()}</Text>
             <Gap height={7} />
             <Text style={styles.Ks}>{record.description}</Text>
@@ -94,15 +103,20 @@ const styles = StyleSheet.create({
   },
   rm3: {
     width: '100%',
-    height: 130,
+    height: 160,
     backgroundColor: '#6DFF59',
     borderRadius: 8,
     padding: 20,
     marginBottom: 15,
   },
+  nama: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 20,
+    color: '#000',
+  },
   tgl: {
     fontFamily: 'Poppins-Regular',
-    fontSize: 22,
+    fontSize: 18,
   },
   Ks: {
     fontFamily: 'Poppins-Bold',
