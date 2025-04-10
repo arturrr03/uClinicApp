@@ -18,17 +18,16 @@ const SignUp = ({navigation}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassowrd] = useState('');
+  const [nim, setNim] = useState('');
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [address, setAddress] = useState('');
   const [desc, setDesc] = useState('');
   const [gender, setGender] = useState('');
-  const onSubmit = () =>{ 
+  const onSubmit = () => {
     const data = {
       name: name,
       email: email,
-    };
-    const record =  {
       fullName: fullName,
       address: address,
       age: age,
@@ -36,15 +35,15 @@ const SignUp = ({navigation}) => {
       description: desc,
       createdAt: serverTimestamp(),
     };
-  
+
     const auth = getAuth();
     const db = getDatabase();
     createUserWithEmailAndPassword(auth, email, password)
       .then(userCredential => {
         // Signed up
         const user = userCredential.user;
-        set(ref(db, 'users/' + user.uid), data);
-        set(ref(db, 'users/' + user.uid + '/record'), record)
+        // Write to 'users/mahasiswa' path
+        set(ref(db, 'users/mahasiswa/' + user.uid), data);
         showMessage({
           message: 'Registrasi berhasil, silahkan login',
           type: 'success',
@@ -87,6 +86,14 @@ const SignUp = ({navigation}) => {
           placeholder="Enter your password"
           value={password}
           onChangeText={value => setPassowrd(value)}
+          secureTextEntry={true}
+        />
+
+        <TextInput
+          label="NIM"
+          placeholder="Enter your NIM"
+          value={nim}
+          onChangeText={value => setNim(value)}
           secureTextEntry={true}
         />
 

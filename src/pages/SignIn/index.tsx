@@ -10,17 +10,44 @@ import {Gap, TextInput} from '../../components';
 import {getAuth, signInWithEmailAndPassword} from 'firebase/auth';
 import {showMessage} from 'react-native-flash-message';
 import {Uclinic} from '../../assets/icon';
+import {getDatabase, ref, get} from 'firebase/database';
+
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassowrd] = useState('');
 
   const onSubmit = () => {
     const auth = getAuth();
+    const db = getDatabase();
+
     signInWithEmailAndPassword(auth, email, password)
       .then(userCredential => {
         // Signed in
         const user = userCredential.user;
-        navigation.navigate('Home', {uid: user.uid});
+
+        // Check if user exists in 'users/mahasiswa'
+        const userRef = ref(db, 'users/mahasiswa/' + user.uid);
+        get(userRef)
+          .then(snapshot => {
+            if (snapshot.exists()) {
+              // User exists in 'users/mahasiswa'
+              navigation.navigate('Home', {uid: user.uid});
+            } else {
+              // User does not exist in 'users/mahasiswa'
+              showMessage({
+                message: 'Access denied',
+                description: 'You are not registered as a mahasiswa.',
+                type: 'danger',
+              });
+            }
+          })
+          .catch(error => {
+            showMessage({
+              message: 'Database error',
+              description: error.message,
+              type: 'danger',
+            });
+          });
       })
       .catch(error => {
         showMessage({
